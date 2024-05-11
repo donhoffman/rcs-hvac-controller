@@ -3,7 +3,6 @@ import json
 import logging
 import paho.mqtt.client as mqtt
 
-from rcs_controller import RCSController
 from zones import zones_by_index
 
 logger = logging.getLogger("app.mqtt_client")
@@ -12,7 +11,7 @@ logger = logging.getLogger("app.mqtt_client")
 class MQTTClient(object):
     def __init__(
         self,
-        rcs_ctrl: RCSController,
+        rcs_ctrl,
         host: str,
         port: int,
         user: str,
@@ -49,12 +48,11 @@ class MQTTClient(object):
             self.connected = True
             logger.debug("Connected to MQTT server.")
 
-            # Send the entity configs
             self.publish_zone_configs()
 
-            # Mark thermostat as offline until data is synced and published
+            # Mark thermostat as payload_not_available until data is synced and published
             availability_topic = f"{self.device_topic_prefix}/availability"
-            client.publish(availability_topic, payload="offline", retain=True)
+            self.publish_offline()
 
             # Set Last Will message.
             client.will_set(availability_topic, payload="offline", qos=1, retain=True)
@@ -64,7 +62,7 @@ class MQTTClient(object):
             client.subscribe(command_topic_root)
 
             # Subscribe to the MQTT integration availability topic
-            client.subscribe(f"{self.topic_root}/availability")
+            client.subscribe(f"{self.topic_root}/status")
         else:
             self.connected = False
             logger.debug(f"Failed to connect to MQTT server result code {rc}.")
@@ -77,10 +75,11 @@ class MQTTClient(object):
         topic_parts: List[str] = msg.topic.split("/")
         if (
             len(topic_parts) == 2
-            and topic_parts[0] == self.device_topic_prefix
-            and topic_parts[1] == "availability"
+            and topic_parts[0] == self.topic_root
+            and topic_parts[1] == "status"
         ):
             if msg.payload == "online":
+                logger.info("MQTT integration restarted. Re-synchronizing data.")
                 self.rcs_ctrl.force_sync()
             return
 
@@ -97,12 +96,10 @@ class MQTTClient(object):
         logger.debug(f"Got message with topic: {msg.topic}")
         logger.debug(f"Payload is: {msg.payload}")
 
-        # Dispatch the message
         # Determine which entity
         entity = topic_parts[3]
-        # TBD: validate entity
-        # Determine command and dispatch
 
+        # Determine command and dispatch
         command = topic_parts[5]
         match command:
             case "setpoint":
@@ -123,11 +120,18 @@ class MQTTClient(object):
                 logger.error(f"Unknown command: {command}")
 
     def on_disconnect(self, _client, _userdata, _rc) -> None:
+        self.publish_offline()
         self.connected = False
 
-    def publish_zone_configs(self):
-        # Publish the device configuration for each zone
+    def publish_online(self):
+        topic = f"{self.device_topic_prefix}/availability"
+        self.client.publish(topic, payload="online", qos=1, retain=True)
 
+    def publish_offline(self):
+        topic = f"{self.device_topic_prefix}/availability"
+        self.client.publish(topic, payload="offline", qos=1, retain=True)
+
+    def publish_zone_configs(self):
         if zones_by_index is None or len(zones_by_index) == 0:
             logger.error(f"No zones found for device '{self.device_node_id}'")
             return
@@ -136,14 +140,19 @@ class MQTTClient(object):
                 "name": None,
                 "device_class": "climate",
                 "unique_id": f"{self.device_node_id}_{zone.entity_name}",
-                "device": {"name": zone.name, "identifiers": [{self.device_node_id}]},
+                "device": {
+                    "name": zone.name,
+                    "identifiers": [f"{self.device_node_id}_{zone.entity_name}"],
+                },
                 "modes": ["off", "heat", "cool", "auto"],
                 "optimistic": False,
                 "precision": 1.0,
                 "temperature_unit": "F",
                 "temp_step": 1.0,
                 "~": f"{self.device_topic_prefix}/{zone.entity_name}",
-                "availability_topic": f"{self.device_topic_prefix}/availability/",
+                "availability_topic": f"{self.device_topic_prefix}/availability",
+                "payload_available": "online",
+                "payload_not_available": "offline",
                 "action_topic": "~/state",
                 "action_template": "{{ value_json.action }}",
                 "current_temperature_topic": "~/state",
@@ -155,10 +164,13 @@ class MQTTClient(object):
                 "mode_state_topic": "~/state",
                 "mode_state_template": "{{ value_json.mode }}",
             }
-            config_topic = f"{self.device_topic_prefix}/config"
+            config_topic = f"{self.device_topic_prefix}/{zone.entity_name}/config"
             self.client.publish(config_topic, json.dumps(zone_config))
 
     def publish_all_zone_status(self, force: bool = False):
+        if not self.connected:
+            logger.debug("Not connected to MQTT broker yet. No status sent.")
+            return
         for zone in zones_by_index.values():
             if not zone.modified_since_last_sync and not force:
                 logger.debug(f"Skipping update of zone '{zone.name}'")
@@ -169,8 +181,8 @@ class MQTTClient(object):
                 "temperature": zone.current_temperature,
                 "action": zone.current_action,
             }
-            status_topic = f"{self.device_topic_prefix}/status"
-            self.client.publish(status_topic, json.dumps(status_entry))
+            state_topic = f"{self.device_topic_prefix}/{zone.entity_name}/state"
+            self.client.publish(state_topic, json.dumps(status_entry))
             logger.debug(
                 f"Published status for zone '{zone.name}': {json.dumps(status_entry)}"
             )

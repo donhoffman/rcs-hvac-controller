@@ -44,10 +44,11 @@ class RCSController(object):
 
     def __init__(self, serial_path: str):
         self.serial_path = serial_path
-        self.conn = serial.Serial(serial_path, 9600, timeout=1, write_timeout=1)
         self.conn_lock = Lock()
         self.first_pass = True
         self.mqtt: MQTTClient | None = None
+        self.conn = None
+        # self.conn = serial.Serial(serial_path, 9600, timeout=1, write_timeout=1)
 
     def __del__(self):
         if self.conn is not None:
@@ -60,19 +61,25 @@ class RCSController(object):
 
         try:
             while True:
-                if not self._get_all_zone_status():
-                    break
+                # if not self._get_all_zone_status():
+                #   break
+                if self.first_pass and self.mqtt.connected:
+                    self.mqtt.publish_online()
+                    # self.first_pass = False
                 self.mqtt.publish_all_zone_status(self.first_pass)
-                self.first_pass = False
                 sleep(15)
         except Exception as e:
             logger.info(f"RCSController received exception: {str(e)}")
             rc = 1
-        else:
+        except KeyboardInterrupt:
+            logger.info("RCSController stopped with keyboard interrupt.")
+            self.mqtt.publish_offline()
             rc = 0
         finally:
-            self.conn.close()
+            if self.conn is not None:
+                self.conn.close()
             self.conn = None
+            self.mqtt = None
         return rc
 
     def set_setpoint(self, entity: str, setpoint: float):

@@ -15,13 +15,13 @@ class Zone(object):
         self.zone_index = zone_index
         self.entity_name = f"zone_{zone_index}"
 
-        self.current_temperature: float | None = None
-        self.current_setpoint: float | None = None
-        self.current_mode: str | None = None
-        self.current_action: str | None = None
-        self.is_heating: bool = False
-        self.is_damper_open: bool = False
-        self.modified_since_last_sync: bool = False
+        self.current_temperature: float | None = 60
+        self.current_setpoint: float | None = 65
+        self.current_mode: str | None = "heat"
+        self.current_action: str | None = "heating"
+        self.is_heating: bool = True
+        self.is_damper_open: bool = True
+        self.modified_since_last_sync: bool = True
 
 
 zones_by_index: Dict[int, Zone] = {}

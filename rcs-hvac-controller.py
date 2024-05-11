@@ -1,4 +1,4 @@
-from typing import Final
+from typing import Final, TYPE_CHECKING
 import argparse
 import yaml
 import logging
@@ -24,10 +24,10 @@ def main() -> int:
     parser.add_argument(
         "--mqtt-port", type=int, default=DEFAULT_MQTT_PORT, help="MQTT port number"
     )
-    parser.add_argument("--mqttUser", type=str, help="MQTT user name")
-    parser.add_argument("--mqttPassword", type=str, help="MQTT password")
+    parser.add_argument("--mqtt-user", type=str, help="MQTT user name")
+    parser.add_argument("--mqtt-password", type=str, help="MQTT password")
     parser.add_argument(
-        "--mqttStateTopicRoot", type=str, help="Root topic for MQTT Client publishing"
+        "--mqtt-topic-root", type=str, help="Root topic for MQTT Client publishing"
     )
     args = parser.parse_args()
 
@@ -52,9 +52,8 @@ def main() -> int:
 
     logger.debug("Activating RCS controller.")
     device_node_id: str = zones_config.get("device_node_id")
-    device_name: str = zones_config.get("device_name")
-    if device_node_id is None or device_name is None:
-        logger.error("Device name or node id not found in config file.  Required.")
+    if device_node_id is None:
+        logger.error("Device node id not found in config file.  Required.")
         return 1
     try:
         controller = RCSController(args.serial)
@@ -62,9 +61,9 @@ def main() -> int:
             controller,
             args.mqtt_host,
             args.mqtt_port,
-            args.mqttUser,
-            args.mqttPassword,
-            topic_root=args.mqttStateTopicRoot,
+            args.mqtt_user,
+            args.mqtt_password,
+            topic_root=args.mqtt_topic_root,
             device_node_id=device_node_id,
         )
     except Exception as e:

@@ -1,0 +1,9 @@
+---
+device_node_id: "montana_rcs_zrc6"
+zones:
+    - name: "Bedroom Thermostat"
+      index: 2
+    - name: "Great Room Thermostat"
+      index: 3
+    - name: "Office Thermostat"
+      index: 1
