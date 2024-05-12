@@ -1,4 +1,4 @@
-from typing import Final, TYPE_CHECKING
+from typing import Final
 import argparse
 import yaml
 import logging

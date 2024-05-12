@@ -48,7 +48,7 @@ class RCSController(object):
         self.first_pass = True
         self.mqtt: MQTTClient | None = None
         self.conn = None
-        # self.conn = serial.Serial(serial_path, 9600, timeout=1, write_timeout=1)
+        self.conn = serial.Serial(serial_path, 9600, timeout=1, write_timeout=1)
 
     def __del__(self):
         if self.conn is not None:
@@ -58,14 +58,15 @@ class RCSController(object):
 
         logger.debug("RCSController started")
         self.mqtt = mqtt
+        rc = 0
 
         try:
             while True:
-                # if not self._get_all_zone_status():
-                #   break
+                if not self._get_all_zone_status():
+                    break
                 if self.first_pass and self.mqtt.connected:
                     self.mqtt.publish_online()
-                    # self.first_pass = False
+                    self.first_pass = False
                 self.mqtt.publish_all_zone_status(self.first_pass)
                 sleep(15)
         except Exception as e:
