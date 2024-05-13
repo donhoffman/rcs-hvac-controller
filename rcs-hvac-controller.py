@@ -65,6 +65,7 @@ def main() -> int:
             args.mqtt_password,
             topic_root=args.mqtt_topic_root,
             device_node_id=device_node_id,
+            version=VERSION,
         )
     except Exception as e:
         logger.error(f"Failed to initialize RCS controller: {str(e)}")

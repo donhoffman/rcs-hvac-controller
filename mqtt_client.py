@@ -20,8 +20,10 @@ class MQTTClient(object):
         device_node_id: str,
         _tls: bool = False,
         _tls_insecure: bool = False,
+        version: str = "Unknown",
         timeout_seconds: int = 60,
     ):
+        self.software_version = version
         self.topic_root = topic_root
         self.device_node_id = device_node_id
         self.device_topic_prefix = f"{topic_root}/climate/{self.device_node_id}"
@@ -146,6 +148,10 @@ class MQTTClient(object):
                     "identifiers": [f"{self.device_node_id}_{zone.entity_name}"],
                     "manufacturer": "RCS",
                     "model": "ZC6R",
+                },
+                "origin": {
+                    "name": "RCS HVAC Controller",
+                    "sw_version": self.software_version,
                 },
                 "modes": ["off", "heat"],
                 "optimistic": False,
