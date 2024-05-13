@@ -92,7 +92,7 @@ class RCSController(object):
         if zone is None or zone.zone_index is None:
             logger.error(f"Unable to find zone for entity: {entity}")
             return
-        cmd_string = f"A=1 Z={zone.zone_index} SP={setpoint:.0f}"
+        cmd_string = f"A=1 Z={zone.zone_index} SP={setpoint:.0f}\r"
         with self.conn_lock:
             sleep(self.SLEEP_BETWEEN_COMMS)
             self.conn.write(cmd_string.encode("utf-8"))
@@ -100,6 +100,7 @@ class RCSController(object):
         if zone.current_setpoint != setpoint:
             zone.modified_since_last_sync = True
             zone.current_setpoint = setpoint
+            self.mqtt.publish_all_zone_status()
 
     def set_mode(self, entity: str, mode: str):
         if not self.conn or not self.conn.is_open or mode not in self.MODE_MAP_MQTT2RCS:
@@ -111,8 +112,9 @@ class RCSController(object):
             return
         rcs_mode = self.MODE_MAP_MQTT2RCS[mode]
         if rcs_mode is not None:
-            cmd_string = f"A=1 Z={zone.zone_index} M={mode}"
+            cmd_string = f"A=1 Z={zone.zone_index} M={rcs_mode}\r"
         else:
+            logger.error(f"Invalid mode in set/mode: {mode}")
             return
         with self.conn_lock:
             sleep(self.SLEEP_BETWEEN_COMMS)
@@ -121,6 +123,7 @@ class RCSController(object):
         if zone.current_mode != mode:
             zone.current_mode = mode
             zone.modified_since_last_sync = True
+            self.mqtt.publish_all_zone_status()
 
     def _get_all_zone_status(self) -> bool:
         if not self.conn:
@@ -137,7 +140,6 @@ class RCSController(object):
         self._process_status_type_2(status_type_2)
         return True
 
-    # noinspection PyMethodMayBeStatic
     def _process_status_type_1(self, status_type_1: bytes):
         zone: zones.Zone | None = None
         param_list_1 = status_type_1.split()
@@ -150,11 +152,11 @@ class RCSController(object):
                     if zone is None:
                         logger.error(f"Bad zone {param}")
 
-                case param if param.startswith(b"self.TEMP_PREFIX"):
+                case param if param.startswith(self.TEMP_PREFIX):
                     if zone is None:
                         break
                     try:
-                        temperature = float(param[len("self.TEMP_PREFIX") :])
+                        temperature = float(param[len(self.TEMP_PREFIX) :])
                     except ValueError:
                         logger.error(f"Bad temperature: {param}")
                         return False
@@ -183,9 +185,10 @@ class RCSController(object):
                     if mode not in self.MODE_MAP_RCS2MQTT:
                         logger.error(f"Bad mode: {param}")
                         break
+                    current_mode = self.MODE_MAP_RCS2MQTT.get(mode)
                     logger.debug(f"Mode: {mode}")
-                    if zone.current_mode != mode:
-                        zone.current_mode = mode
+                    if zone.current_mode != current_mode:
+                        zone.current_mode = current_mode
                         zone.modified_since_last_sync = True
 
                 case param if param.startswith(self.FAN_MODE_PREFIX):
@@ -197,7 +200,6 @@ class RCSController(object):
                 case _:
                     logger.debug(f"Ignored Type 1 parameter: {param}")
 
-    # noinspection PyMethodMayBeStatic
     def _process_status_type_2(self, status_type_2: bytes):
         is_hvac_heating: bool | None = None
         param_list_2 = status_type_2.split()

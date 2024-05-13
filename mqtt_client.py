@@ -58,7 +58,7 @@ class MQTTClient(object):
             client.will_set(availability_topic, payload="offline", qos=1, retain=True)
 
             # Subscribe to the command topic for all zones
-            command_topic_root = f"{self.device_topic_prefix}/+/set"
+            command_topic_root = f"{self.device_topic_prefix}/+/set/#"
             client.subscribe(command_topic_root)
 
             # Subscribe to the MQTT integration availability topic
@@ -112,10 +112,11 @@ class MQTTClient(object):
                     self.rcs_ctrl.set_setpoint(entity, target_setpoint)
             case "mode":
                 logger.debug(f"Setting mode to: {msg.payload}")
-                if msg.payload not in ["off", "heat", "cool", "auto"]:
-                    logger.error(f"Bad mode payload: {msg.payload}")
+                payload = msg.payload.decode("utf-8")
+                if payload not in ["off", "heat", "cool", "auto"]:
+                    logger.error(f"Bad mode payload: {payload}")
                     return
-                self.rcs_ctrl.set_mode(entity, msg.payload)
+                self.rcs_ctrl.set_mode(entity, payload)
             case _:
                 logger.error(f"Unknown command: {command}")
 

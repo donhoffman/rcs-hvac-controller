@@ -14,7 +14,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/rcs-hvac-controller.py" />
-    <option name="PARAMETERS" value="--config &quot;./example_config.yml&quot; --mqtt-host &quot;10.0.173.15&quot; --mqtt-user &quot;debug_publish&quot; --mqtt-password &quot;AEH@dJMLff*D6Du3WpR8oLyYhEvA7M&quot; --mqtt-topic-root &quot;homeassistant&quot; --log-level &quot;DEBUG&quot; --serial &quot;/dev/null&quot;" />
+    <option name="PARAMETERS" value="--config &quot;./example_config.yml&quot; --mqtt-host &quot;192.168.9.15&quot; --mqtt-user &quot;debug_publish&quot; --mqtt-password &quot;AEH@dJMLff*D6Du3WpR8oLyYhEvA7M&quot; --mqtt-topic-root &quot;test&quot; --log-level &quot;DEBUG&quot; --serial &quot;/dev/serial/by-id/usb-0557_2008-if00-port0&quot;" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
