@@ -144,8 +144,10 @@ class MQTTClient(object):
                 "device": {
                     "name": zone.name,
                     "identifiers": [f"{self.device_node_id}_{zone.entity_name}"],
+                    "manufacturer": "RCS",
+                    "model": "ZC6R",
                 },
-                "modes": ["off", "heat", "cool", "auto"],
+                "modes": ["off", "heat"],
                 "optimistic": False,
                 "precision": 1.0,
                 "temperature_unit": "F",
