@@ -5,7 +5,7 @@ import yaml
 import logging
 
 from rcs_controller import RCSController
-from src.mqtt_client import MQTTClient
+from mqtt_client import MQTTClient
 from zones import create_zones_from_config
 
 VERSION: Final = "1.0.0"

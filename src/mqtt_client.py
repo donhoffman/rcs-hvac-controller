@@ -37,10 +37,11 @@ class MQTTClient(object):
         self.client.on_message = self.on_message
         self.client.on_disconnect = self.on_disconnect
         self.client.reconnect_delay_set(self.timeout_seconds)
+        logger.info(f"Connecting to MQTT server at {host}:{port}.")
+
         try:
             self.client.connect(host, port, self.timeout_seconds)
             self.client.loop_start()
-            logger.info(f"Connecting to MQTT server at {host}:{port}.")
         except Exception as e:
             logger.debug(f"Failed to connect to MQTT broker at {host}: {str(e)}")
             raise e

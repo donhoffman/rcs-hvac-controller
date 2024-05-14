@@ -1,0 +1,14 @@
+version: '3'
+services:
+  rcs_hvac_controller:
+    build: .
+    env_file:
+      - /appdata/rcs_hvac_controller/.env
+    devices:
+      - /dev/ttyUSB3:/dev/ttyUSB3
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /appdata/rcs_hvac_controller/config.yml:/config/config.yml
+    working_dir: /app
+    command: python3 rcs-hvac-controller.py
+    restart: "unless-stopped"
