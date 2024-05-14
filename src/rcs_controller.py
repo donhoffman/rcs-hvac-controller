@@ -5,7 +5,7 @@ from typing import Final
 
 import serial
 
-from mqtt_client import MQTTClient
+from src.mqtt_client import MQTTClient
 import zones
 
 logger = logging.getLogger("app.rcs_controller")
