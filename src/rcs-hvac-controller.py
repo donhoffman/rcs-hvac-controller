@@ -1,4 +1,5 @@
 from typing import Final
+import os
 import argparse
 import yaml
 import logging
@@ -16,18 +17,49 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="RCS HVAC Controller")
 
     parser.add_argument(
-        "--config", type=str, help="Full path to controller/zone config file"
+        "--config",
+        type=str,
+        help="Full path to controller/zone config file",
+        default=os.getenv("CONFIG", "/config/config.yml"),
     )
-    parser.add_argument("--log-level", type=str, default="INFO", help="Logging level")
-    parser.add_argument("--serial", type=str, help="Serial port", required=True)
-    parser.add_argument("--mqtt-host", type=str, default="127.0.0.1", help="MQTT host")
     parser.add_argument(
-        "--mqtt-port", type=int, default=DEFAULT_MQTT_PORT, help="MQTT port number"
+        "--log-level",
+        type=str,
+        help="Logging level",
+        default=os.getenv("LOG_LEVEL", "INFO"),
     )
-    parser.add_argument("--mqtt-user", type=str, help="MQTT user name")
-    parser.add_argument("--mqtt-password", type=str, help="MQTT password")
     parser.add_argument(
-        "--mqtt-topic-root", type=str, help="Root topic for MQTT Client publishing"
+        "--serial", type=str, help="Serial port", default=os.getenv("SERIAL", None)
+    )
+    parser.add_argument(
+        "--mqtt-host",
+        type=str,
+        help="MQTT host",
+        default=os.getenv("MQTT_HOST", "127.0.0.1"),
+    )
+    parser.add_argument(
+        "--mqtt-port",
+        type=int,
+        help="MQTT port number",
+        default=os.getenv("MQTT_PORT", DEFAULT_MQTT_PORT),
+    )
+    parser.add_argument(
+        "--mqtt-user",
+        type=str,
+        help="MQTT user name",
+        default=os.getenv("MQTT_USER", None),
+    )
+    parser.add_argument(
+        "--mqtt-password",
+        type=str,
+        help="MQTT password",
+        default=os.getenv("MQTT_PASSWORD", None),
+    )
+    parser.add_argument(
+        "--mqtt-topic-root",
+        type=str,
+        help="Root topic for MQTT Client publishing",
+        default=os.getenv("TOPIC_ROOT", "homeassistant"),
     )
     args = parser.parse_args()
 
