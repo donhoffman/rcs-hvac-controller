@@ -54,11 +54,11 @@ class MQTTClient(object):
             self.publish_zone_configs()
 
             # Mark thermostat as payload_not_available until data is synced and published
-            availability_topic = f"{self.device_topic_prefix}/availability"
             self.publish_offline()
 
             # Set Last Will message.
-            client.will_set(availability_topic, payload="offline", qos=1, retain=True)
+            topic = f"{self.device_topic_prefix}/availability"
+            client.will_set(topic, payload="offline", qos=1, retain=True)
 
             # Subscribe to the command topic for all zones
             command_topic_root = f"{self.device_topic_prefix}/+/set/#"
@@ -124,6 +124,7 @@ class MQTTClient(object):
                 logger.error(f"Unknown command: {command}")
 
     def on_disconnect(self, _client, _userdata, _rc) -> None:
+        logger.info("Disconnecting from MQTT server.")
         self.publish_offline()
         self.connected = False
 

@@ -1,5 +1,7 @@
 from typing import Final
 import os
+import signal
+import sys
 import argparse
 import yaml
 import logging
@@ -14,6 +16,17 @@ LOG_FORMAT: Final = "%(asctime)s - %(module)s - %(levelname)s - %(message)s"
 
 
 def main() -> int:
+    mqtt = None
+
+    # Set up for exit
+    def signal_handler(sig, frame):
+        logger.info("Got SIGTERM. Shutting down.")
+        if mqtt is not None:
+            mqtt.publish_offline()
+            sys.exit(0)
+
+    signal.signal(signal.SIGTERM, signal_handler)
+
     parser = argparse.ArgumentParser(description="RCS HVAC Controller")
 
     parser.add_argument(
@@ -101,7 +114,7 @@ def main() -> int:
         )
     except Exception as e:
         logger.error(f"Failed to initialize RCS controller: {str(e)}")
-        return -1
+        return 1
 
     # Activate controller loop
     code = controller.control_loop(mqtt)
@@ -110,4 +123,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     rc = main()
-    exit(rc)
+    sys.exit(rc)

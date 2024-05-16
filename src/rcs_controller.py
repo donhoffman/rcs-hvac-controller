@@ -55,7 +55,6 @@ class RCSController(object):
             self.conn.close()
 
     def control_loop(self, mqtt: MQTTClient) -> int:
-
         logger.debug("RCSController started")
         self.mqtt = mqtt
         rc = 0
@@ -74,13 +73,15 @@ class RCSController(object):
             rc = 1
         except KeyboardInterrupt:
             logger.info("RCSController stopped with keyboard interrupt.")
-            self.mqtt.publish_offline()
             rc = 0
         finally:
+            logger.info("RCSController exiting.")
+            self.mqtt.publish_offline()
             if self.conn is not None:
                 self.conn.close()
             self.conn = None
             self.mqtt = None
+
         return rc
 
     def set_setpoint(self, entity: str, setpoint: float):
