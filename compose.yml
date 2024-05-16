@@ -5,7 +5,7 @@ services:
     env_file:
       - /appdata/rcs_hvac_controller/.env
     devices:
-      - /dev/ttyUSB3:/dev/ttyUSB3
+      - /dev/serial/by-id/usb-0557_2008-if00-port0:/dev/serial/by-id/usb-0557_2008-if00-port0
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /appdata/rcs_hvac_controller/config.yml:/config/config.yml
