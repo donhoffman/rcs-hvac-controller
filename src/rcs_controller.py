@@ -64,9 +64,14 @@ class RCSController(object):
                 if not self._get_all_zone_status():
                     break
                 if self.first_pass and self.mqtt.connected:
+                    logger.debug("Doing first pass initialization.")
                     self.mqtt.publish_online()
+                    self.mqtt.publish_zone_configs()
+                    sleep(2)
+                    self.mqtt.publish_all_zone_status(True)
                     self.first_pass = False
-                self.mqtt.publish_all_zone_status(self.first_pass)
+                else:
+                    self.mqtt.publish_all_zone_status()
                 sleep(15)
         except Exception as e:
             logger.info(f"RCSController received exception: {str(e)}")

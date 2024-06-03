@@ -51,7 +51,7 @@ class MQTTClient(object):
             self.connected = True
             logger.debug("Connected to MQTT server.")
 
-            self.publish_zone_configs()
+            # self.publish_zone_configs()
 
             # Mark thermostat as payload_not_available until data is synced and published
             self.publish_offline()
@@ -81,7 +81,7 @@ class MQTTClient(object):
             and topic_parts[0] == self.topic_root
             and topic_parts[1] == "status"
         ):
-            if msg.payload == "online":
+            if msg.payload == b"online":
                 logger.info("MQTT integration restarted. Re-synchronizing data.")
                 self.rcs_ctrl.force_sync()
             return
